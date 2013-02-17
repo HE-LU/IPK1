@@ -1,10 +1,13 @@
 #include <iostream>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <sstream>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
+#include <netdb.h> 
 #include <string>
 
 #include "socket.h"
@@ -14,15 +17,11 @@ using namespace std;
 
 int main(int argc, char** argv)
 {
-// 	int port;
-// 	struct hostent *server_ip;
-	
 	string address;
 	address = *(argv+1);
-	address = "http://www.hovno.cz:8080/blabla.php?page=slovnik";
+	address = "http://www.fit.vutbr.cz:80";
 	
 	class_parser parse(address);
-	
 	
 	cout << address << endl << endl;
 	
@@ -32,14 +31,12 @@ int main(int argc, char** argv)
  	cout << "path: " << parse.get_path() << endl;
 	cout << "query: " << parse.get_query() << endl;
 	
+	class_socket socket;
+	socket.set_server_address(parse.get_host(),parse.get_port());
+	if(!socket.s_connect())
+	cout << "OK" << endl;
 	
 	
-// 	if (server_ip == NULL) 
-// 	{
-// 	  cout << "No such host!" << endl;
-// 	}
-// 
-// 	class_socket socket;
-	
+
         return 0;
 }

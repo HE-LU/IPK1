@@ -8,7 +8,6 @@ class_parser::class_parser()
 class_parser::class_parser(string url)
 {
     typedef string::const_iterator iterator_t;
-
     iterator_t url_End = url.end();
 
     //start
@@ -84,6 +83,8 @@ int class_parser::get_port()
     int pom;
     stringstream buffer(port);
     buffer >> pom;
+    if(pom < 0 || pom > 65535)
+      pom = 80;
     return pom;
 }
 
