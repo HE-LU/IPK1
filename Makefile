@@ -14,7 +14,7 @@ INCS =
 CXXINCS =
 CXXFLAGS = -Wall $(SCFLAGS)
 LOGIN = Tuxilero
-TARBALL = Makefile main.cpp
+TARBALL = Makefile main.cpp parser.cpp parser.h socket.cpp socket.h
 #CFLAGS = $(INCS)  -fmessage-length=0
 
 .PHONY: gzip
@@ -30,14 +30,20 @@ all: $(NAME)
 
 ################################################################################
 # linkovani vysledneho souboru
-main: main.o
-	$(CC) -o $@ main.o
+main: main.o parser.o socket.o
+	$(CC) -o $@ main.o parser.o socket.o
 
 
 ################################################################################
 # kompilace hlavniho souboru
 main.o: main.cpp
 	$(CC) -c main.cpp -o main.o $(CXXFLAGS)
+	
+parser.o: parser.cpp
+	$(CC) -c parser.cpp -o parser.o $(CXXFLAGS)
+	
+socket.o: socket.cpp
+	$(CC) -c socket.cpp -o socket.o $(CXXFLAGS)
 
 ################################################################################
 # kompilace modulu
