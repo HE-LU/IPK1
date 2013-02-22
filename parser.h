@@ -13,6 +13,7 @@ class class_parser
 	string host;
 	string port;
 	string path;
+	string file;
 	string query;
 	
       public:
@@ -22,6 +23,7 @@ class class_parser
 	string get_host();
 	int get_port();
 	string get_path();
+	string get_file();
 	string get_query();
 };
  
