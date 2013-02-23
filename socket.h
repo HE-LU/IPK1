@@ -13,6 +13,8 @@
 #include <netdb.h> 
 #include <string>
 
+#define BUFF_SIZE 1024
+
 using namespace std;
 
 class class_socket
@@ -27,6 +29,9 @@ class class_socket
 	struct hostent *server;
 	void set_server_address(string host,int port);
 	int s_connect();
+	int s_disconnect();
+	string s_read();
+	int s_write(char*);
 };
  
 #endif // CLASS_SOCKET_H

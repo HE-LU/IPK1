@@ -9,9 +9,12 @@
 #include <netinet/in.h>
 #include <netdb.h> 
 #include <string>
+#include <fstream>
+
 
 #include "socket.h"
 #include "parser.h"
+
 
 using namespace std;
 
@@ -21,85 +24,88 @@ int main(int argc, char** argv)
 	address = *(argv+1);
 // 	address = "http://www.seznam.cz/st/img/2011//logo.png";
 	
-	class_parser parse(address);
-	int pomport = parse.get_port();
-	
-	cout << address << endl << endl;
-	
-	cout << "protocol: " << parse.get_protocol() << endl;
-	cout << "host: " << parse.get_host() << endl;
-	cout << "port: " << pomport << endl;
- 	cout << "path: " << parse.get_path() << endl;
-	cout << "file: " << parse.get_file() << endl;
-	cout << "query: " << parse.get_query() << endl;
-	
-	class_socket socket;
-	socket.set_server_address(parse.get_host(),pomport);
-	if(!socket.s_connect())
-	cout << "OK" << endl;
-	
-	// GET Query
-	char *query;
-	char *getpage = (char*) parse.get_path().c_str();
-	char *tpl = "GET /%s HTTP/1.0\r\nHost: %s\r\nUser-Agent: %s\r\n\r\n";
-	if(getpage[0] == '/'){
-	  getpage = getpage + 1;
-	  fprintf(stderr,"Removing leading \"/\", converting %s to %s\n", parse.get_path().c_str(), getpage);
-	}
-	// -5 is to consider the %s %s %s in tpl and the ending \0
-	query = (char *)malloc(parse.get_host().size()+strlen(getpage)+strlen("HTMLGET 1.0")+strlen(tpl)-5);
-	sprintf(query, tpl, getpage, parse.get_host().c_str(), "HTMLGET 1.0");
-	
-	cout << "Query: "<<endl << query << endl;
-	
-	 //Send the query to the server
-	int sent = 0;
-	int tmpres = 0;
-	while(sent < strlen(query))
-	{ 
-	  tmpres = send(socket.sock, query+sent, strlen(query)-sent, 0);
-	  if(tmpres == -1){
-	    perror("Can't send query");
-	    exit(1);
-	  }
-	  sent += tmpres;
-	}
-	
-	//now it is time to receive the page
-	char buf[10000+1];
-	memset(buf, 0, sizeof(buf));
-	int htmlstart = 0;
-	char * htmlcontent;
-	FILE* soubor;
-	soubor = fopen("soubor.txt", "w");
-	
-	
-	while((tmpres = recv(socket.sock, buf, 10000, 0)) > 0){
-	  if(htmlstart == 0)
-	  {
-	    /* Under certain conditions this will not work.
-	    * If the \r\n\r\n part is splitted into two messages
-	    * it will fail to detect the beginning of HTML content
-	    */
-	    htmlcontent = strstr(buf, "\r\n\r\n");
-	    if(htmlcontent != NULL){
-	      htmlstart = 1;
-	      htmlcontent += 4;
-	    }
-	  }else{
-	    htmlcontent = buf;
-	  }
-	  if(htmlstart){
-	    fprintf(soubor, htmlcontent);
-	  }
-	  memset(buf, 0, tmpres);
-	}
-	if(tmpres < 0)
+	bool recursive = true;
+	for(int i=0; (i<4 && recursive) ;i++)
 	{
-	  perror("Error receiving data");
-	}
+	  cout << endl << "ZACATEK!!!!"<<endl;
+	  class_parser parse(address);
+	  int pomport = parse.get_port();
+	  
+// 	  cout << address << endl << endl;
+// 	  
+// 	  cout << "protocol: " << parse.get_protocol() << endl;
+// 	  cout << "host: " << parse.get_host() << endl;
+// 	  cout << "port: " << pomport << endl;
+// 	  cout << "path: " << parse.get_path() << endl;
+//	  cout << "file: " << parse.get_file() << endl;
+// 	  cout << "query: " << parse.get_query() << endl;
+	  
+	  class_socket socket;
+	  socket.set_server_address(parse.get_host(),pomport);
+	  if(!socket.s_connect())
+	    cout << "OK" << endl;
+	  else
+	    cout << "FAIL" << endl;
 	
-	fclose(soubor);
+	
+	
+	  // GET Query
+	  string query_string;
+	  query_string += "GET " + ((parse.get_path() == "") ? "/" : parse.get_path()) + parse.get_file() + " HTTP/1.0\r\nHost:";
+	  query_string += parse.get_host() + "\r\nUser-Agent: HTMLGET 1.0\r\n\r\n"; 
+	    
+	  //Send query
+	  char* query = (char*)query_string.c_str();
+// 	  cout << "-------------------------" << endl;
+//   	  cout << endl << endl << query << endl << endl; // DEBUG
+// 	  cout << "-------------------------" << endl;
+	  socket.s_write(query);
+	
+	  //Analyze response
+	  string response;
+	  response = socket.s_read();
+	  
+	  socket.s_disconnect();
+	  
+	  unsigned re_Start = 0;
+	  unsigned re_End = response.size();
+	  unsigned re_html_End = response.find("\r\n\r\n");
+	  unsigned re_code = response.find(" ");
+	  
+	  string code = response.substr(re_code+1,3);
+
+	  if(code == "200")
+	  {
+	    string re_head = response.substr(re_Start, re_html_End+4);
+	    string re_body = response.substr(re_html_End+4,re_End);
+	    
+// 	    cout << re_Start << " " << re_End << " " << re_html_End << endl << endl; // DEBUG
+// 	    cout << re_head << endl<< endl<< endl<< endl;
+	    
+	    ofstream file(((parse.get_file() == "") ? "index.html" : parse.get_file()).c_str());
+	    file << re_body;
+	    file.close();
+	    recursive = false;
+	  }
+	  else if(code == "301" || code == "302")
+	  {
+	    unsigned re_loc_start = response.find("Location: ");
+	    unsigned re_loc_end = response.find("\n",re_loc_start);
+	    
+	    string location = response.substr(re_loc_start+10,re_loc_end-re_loc_start-11);
+	    address.assign(location);
+	    cout << endl << address << endl;
+	    
+	  }
+	  else if(code.at(0) == '4' || code.at(0) == '5')
+	  {
+	    fprintf(stderr, "4xx or 5xx error ocured!");
+	  }
+	  else
+	  {
+	    fprintf(stderr, "shit happened!");
+	  }
+	}
 	
 	
 	
