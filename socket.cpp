@@ -12,26 +12,31 @@ class_socket::class_socket()
   }
 }
 
-void class_socket::set_server_address(string host,int port)
+int class_socket::s_connect(string host,string port)
 {
-  server = gethostbyname(host.c_str());
-  if (server == NULL) 
-  {
-    fprintf(stderr,"ERROR, no such host\n");
-    exit(0);
-  }
-  bzero((char *) &server_addr, sizeof(server_addr));
-  server_addr.sin_family = AF_INET;  
-  bcopy((char *)server->h_addr, (char *)&server_addr.sin_addr.s_addr, server->h_length);
-  server_addr.sin_port = htons(port);
-}
+    struct addrinfo hints, *res, *tmp;
+    int status;
+    
+    memset(&hints, 0, sizeof hints);
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
 
-int class_socket::s_connect()
-{
-  if (connect(sock,(struct sockaddr *) &server_addr, sizeof(server_addr)) < 0) 
-    return -1;
-  else
-    return 0;
+    if ((status = getaddrinfo(host.c_str(), port.c_str(), &hints, &res)) != 0) 
+      return 2;
+
+    
+    for(tmp = res;tmp != NULL; tmp = tmp->ai_next) 
+    {
+      if (connect(sock, tmp->ai_addr, tmp->ai_addrlen) < 0) 
+	continue;
+      else
+      {
+	freeaddrinfo(res); 
+	return 0;
+      }
+    } 
+    freeaddrinfo(res);
+    return 1;
 }
 
 int class_socket::s_disconnect()
@@ -40,19 +45,33 @@ int class_socket::s_disconnect()
     return 0;
 }
 
-int class_socket::s_write(char* query)
+int class_socket::s_write(string query)
 {
-  unsigned int sent = 0;
+  int sent = 0;
   int tmp = 0;
-  while(sent < strlen(query))
+  while(sent < query.size())
   {
-    tmp = send(sock, query+sent, strlen(query)-sent, 0);
-    if(tmp == -1){
+    tmp = send(sock, query.c_str()+sent, query.size()-sent, 0);
+    if(tmp == -1)
       return -1;
-    }
     sent = sent + tmp;
   }
   return 0;
+
+//   int total = 0;        // how many bytes we've sent
+//   int bytesleft = query.size(); // how many we have left to send
+//   int n;
+
+//   while(total < query.size()) 
+//   {
+//     n = send(sock, query.c_str()+total, bytesleft, 0);
+//     if (n == -1) { break; }
+//     total += n;
+//     bytesleft -= n;
+//   }
+//   return 0;
+  
+  
 }
 
 string class_socket::s_read()

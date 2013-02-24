@@ -22,45 +22,40 @@ int main(int argc, char** argv)
 {
 	string address;
 	address = *(argv+1);
-// 	address = "http://www.seznam.cz/st/img/2011//logo.png";
-	
+
 	bool recursive = true;
 	for(int i=0; (i<4 && recursive) ;i++)
 	{
-	  cout << endl << "ZACATEK!!!!"<<endl;
 	  class_parser parse(address);
-	  int pomport = parse.get_port();
 	  
-// 	  cout << address << endl << endl;
-// 	  
-// 	  cout << "protocol: " << parse.get_protocol() << endl;
-// 	  cout << "host: " << parse.get_host() << endl;
-// 	  cout << "port: " << pomport << endl;
-// 	  cout << "path: " << parse.get_path() << endl;
-//	  cout << "file: " << parse.get_file() << endl;
-// 	  cout << "query: " << parse.get_query() << endl;
+	  
+	         cout << address << endl << endl;
+       
+       cout << "protocol: " << parse.get_protocol() << endl;
+       cout << "host: " << parse.get_host() << endl;
+       cout << "port: " << parse.get_port() << endl;
+       cout << "path: " << parse.get_path() << endl;
+       cout << "file: " << parse.get_file() << endl;
+       cout << "query: " << parse.get_query() << endl;
 	  
 	  class_socket socket;
-	  socket.set_server_address(parse.get_host(),pomport);
-	  if(!socket.s_connect())
+	  int tmp = socket.s_connect(parse.get_host(),parse.get_port());
+	  if( tmp == 0)
 	    cout << "OK" << endl;
+	  else if ( tmp == 2)
+	    cout << "FAIL IN GETADDRINFO" << endl;
 	  else
 	    cout << "FAIL" << endl;
 	
-	
-	
 	  // GET Query
-	  string query_string;
-	  query_string += "GET " + ((parse.get_path() == "") ? "/" : parse.get_path()) + parse.get_file() + " HTTP/1.0\r\nHost:";
-	  query_string += parse.get_host() + "\r\nUser-Agent: HTMLGET 1.0\r\n\r\n"; 
-	    
+	  string query;
+	  query += "GET " + ((parse.get_path() == "") ? "/" : parse.get_path()) + parse.get_file() + " HTTP/1.0\r\nHost:";
+	  query += parse.get_host() + "\r\nUser-Agent: HTMLGET 1.0\r\n\r\n"; 
+	   
+	  cout << endl << query << endl;
 	  //Send query
-	  char* query = (char*)query_string.c_str();
-// 	  cout << "-------------------------" << endl;
-//   	  cout << endl << endl << query << endl << endl; // DEBUG
-// 	  cout << "-------------------------" << endl;
 	  socket.s_write(query);
-	
+	   
 	  //Analyze response
 	  string response;
 	  response = socket.s_read();
@@ -74,15 +69,13 @@ int main(int argc, char** argv)
 	  
 	  string code = response.substr(re_code+1,3);
 
+	  cout << code << endl;
 	  if(code == "200")
 	  {
 	    string re_head = response.substr(re_Start, re_html_End+4);
 	    string re_body = response.substr(re_html_End+4,re_End);
 	    
-// 	    cout << re_Start << " " << re_End << " " << re_html_End << endl << endl; // DEBUG
-// 	    cout << re_head << endl<< endl<< endl<< endl;
-	    
-	    ofstream file(((parse.get_file() == "") ? "index.html" : parse.get_file()).c_str());
+	    ofstream file(((parse.get_file_name() == "") ? "index.html" : parse.get_file_name()).c_str());
 	    file << re_body;
 	    file.close();
 	    recursive = false;
@@ -105,9 +98,8 @@ int main(int argc, char** argv)
 	  {
 	    fprintf(stderr, "shit happened!");
 	  }
+	  
 	}
-	
-	
 	
 
         return 0;

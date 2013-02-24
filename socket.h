@@ -12,6 +12,7 @@
 #include <netinet/in.h>
 #include <netdb.h> 
 #include <string>
+#include <arpa/inet.h>
 
 #define BUFF_SIZE 1024
 
@@ -25,13 +26,11 @@ class class_socket
 	class_socket();
 	
 	int sock;
-	struct sockaddr_in server_addr;
 	struct hostent *server;
-	void set_server_address(string host,int port);
-	int s_connect();
+	int s_connect(string host,string port);
 	int s_disconnect();
 	string s_read();
-	int s_write(char*);
+	int s_write(string);
 };
  
 #endif // CLASS_SOCKET_H

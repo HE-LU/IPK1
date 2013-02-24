@@ -21,9 +21,10 @@ class class_parser
 	class_parser(string url);
 	string get_protocol();
 	string get_host();
-	int get_port();
+	string get_port();
 	string get_path();
 	string get_file();
+	string get_file_name();
 	string get_query();
 };
  
