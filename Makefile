@@ -6,7 +6,7 @@
 # promenne prekladu
 
 
-NAME = main
+NAME = webclient
 CPP  = g++
 CC   = g++
 SCFLAGS = -g -pedantic -Wall -W -O2 -DINLINE
@@ -30,7 +30,7 @@ all: $(NAME)
 
 ################################################################################
 # linkovani vysledneho souboru
-main: main.o parser.o socket.o
+webclient: main.o parser.o socket.o
 	$(CC) -o $@ main.o parser.o socket.o
 
 

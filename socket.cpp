@@ -1,14 +1,12 @@
 #include "socket.h"
 
-
-
 class_socket::class_socket()
 {
   sock = socket(AF_INET, SOCK_STREAM, 0);
   if(sock < 0) 
   {
     perror("ERROR: Cannot create socket!");
-    exit(0);
+    exit(-1);
   }
 }
 
@@ -47,7 +45,7 @@ int class_socket::s_disconnect()
 
 int class_socket::s_write(string query)
 {
-  int sent = 0;
+  unsigned int sent = 0;
   int tmp = 0;
   while(sent < query.size())
   {
@@ -57,38 +55,178 @@ int class_socket::s_write(string query)
     sent = sent + tmp;
   }
   return 0;
-
-//   int total = 0;        // how many bytes we've sent
-//   int bytesleft = query.size(); // how many we have left to send
-//   int n;
-
-//   while(total < query.size()) 
-//   {
-//     n = send(sock, query.c_str()+total, bytesleft, 0);
-//     if (n == -1) { break; }
-//     total += n;
-//     bytesleft -= n;
-//   }
-//   return 0;
-  
-  
 }
+
+// string class_socket::s_read()
+// {
+//   char buf[BUFF_SIZE+1];
+//   string body="";
+//   int tmpres = 0;
+//   
+//   string header;
+//   memset(buf, 0, sizeof(buf));
+//   unsigned header_end = -1; 
+//   while(header_end >= header.size())
+//   {
+//     //cout << header << endl;
+//     tmpres = recv(sock, buf, 1, 0);
+//     header.push_back(buf[0]);
+//     header_end = header.find("\r\n\r\n");
+//     
+//     memset(buf, 0, sizeof(buf));
+//   }
+//   
+//   unsigned chunked_start = header.find("Transfer-Encoding: chunked");
+//   
+//   if(chunked_start < header.size())
+//   {
+//     memset(buf, 0, sizeof(buf));
+//     while((tmpres = recv(sock, buf, BUFF_SIZE, 0)) > 0)
+//     {
+//       for (int i=0;i<tmpres;i++)
+//       {
+// 	body.push_back(buf[i]);
+//       }
+//       memset(buf, 0, sizeof(buf));
+//     }
+//   }
+//   else
+//   {
+//     int read_size=1;
+//     while(read_size != 0)
+//     {
+//       unsigned size_end = 0;
+//       string size="";
+//       
+//       memset(buf, 0, sizeof(buf));
+//       cout << "RADEK" << endl;
+//       
+//       while(size_end >= size.size())
+//       {
+// 	tmpres = recv(sock, buf, 1, 0);
+// 	size.push_back(buf[0]);
+// 	size_end = size.find("\r\n");	
+// 	memset(buf, 0, sizeof(buf));
+//       }
+//       
+//       string ss_string = size.substr(0,size_end);
+//       cout << ss_string << endl;
+//       
+//       //cout << size << endl;
+//       istringstream ss(size);
+//       int read_size;
+//       ss >> read_size;
+//       
+//       cout << read_size << endl;
+//       
+//       memset(buf, 0, sizeof(buf));
+//       tmpres = recv(sock, buf, read_size, 0);
+//       for (int i=0;i<tmpres;i++)
+// 	{
+// 	  body.push_back(buf[i]);
+// 	}
+//       memset(buf, 0, sizeof(buf));
+//     
+//       break;
+//     }
+//   }
+//   
+//   string ret = header + body;
+//   return ret;
+// }
+
 
 string class_socket::s_read()
 {
   char buf[BUFF_SIZE+1];
-  string ret="";
+  string body="";
   int tmpres = 0;
+  char buf_small;
+  string header;
   
-  memset(buf, 0, sizeof(buf));
-  while((tmpres = recv(sock, buf, BUFF_SIZE, 0)) > 0)
+  memset(&buf_small, 0, sizeof(char));
+  unsigned header_end = -1; 
+  while(header_end >= header.size())
   {
-    for (int i=0;i<tmpres;i++)
-    {
-      ret.push_back(buf[i]);
-    }
-    memset(buf, 0, sizeof(buf));
+    //cout << header << endl;
+    tmpres = recv(sock, &buf_small, 1, 0);
+    header.push_back(buf_small);
+    header_end = header.find("\r\n\r\n");
+    
+    memset(&buf_small, 0, sizeof(char));
   }
+  cout << header << endl;
+  unsigned chunked_start = header.find("Transfer-Encoding: chunked");
+  cout << chunked_start << endl;
+  
+  
+  if(chunked_start > header.size())
+  {
+    cout << "NORMAL MODE" << endl;
+    memset(buf, 0, sizeof(buf));
+    while((tmpres = recv(sock, buf, BUFF_SIZE, 0)) > 0)
+    {
+      for (int i=0;i<tmpres;i++)
+      {
+	body.push_back(buf[i]);
+      }
+      memset(buf, 0, sizeof(buf));
+    }
+  }
+  else
+  {
+    cout << "CHUNKED MODE" << endl;
+    int read_size=1;
+    while(1)
+    {
+      unsigned size_end = 0;
+      string size="";
+      
+      
+      memset(&buf_small, 0, sizeof(char));
+      while(size_end >= size.size())
+      {
+	tmpres = read(sock, &buf_small, 1);
+	size.push_back(buf_small);
+	size_end = size.find("\r\n");	
+	memset(&buf_small, 0, sizeof(char));
+      }      
+      
+      string ss_string = size.substr(0,size_end);
+     
+      //cout << size << endl;
+      stringstream ss(size);
+      int read_size;
+      ss << std::hex << ss_string;
+      ss >> read_size;
+      
+       cout << "size: " << ss_string << " num: " << read_size << endl;
+      
+      
+      //cout << read_size << endl;
+      if(read_size == 0)
+	break;
+      
+      memset(buf, 0, sizeof(buf));
+      
+      unsigned int myCounter = 0;
+      while(myCounter != read_size){
+	tmpres = read(sock, buf, read_size - myCounter);
+	
+	body += string(buf);
+      
+	myCounter += tmpres;
+      }
+
+      //cout << "size: " << ss_string << " num: " << read_size << "READ SIZE: " << tmpres << endl;
+      //for (int i=0;i<tmpres;i++)
+      //{
+	//body.push_back(buf[i]);
+      //}
+      tmpres = read(sock, buf, 2);
+    }
+  }
+  
+   string ret = header + body;
   return ret;
 }
-

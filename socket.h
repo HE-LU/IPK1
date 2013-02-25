@@ -1,18 +1,16 @@
 #ifndef CLASS_SOCKET_H
 #define CLASS_SOCKET_H
 
-#include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sstream>
-#include <sys/socket.h>
-#include <sys/types.h>
+#include <netdb.h>
 #include <netinet/in.h>
-#include <netdb.h> 
+#include <sys/socket.h>
 #include <string>
-#include <arpa/inet.h>
+#include <iostream>
+#include <sstream>
 
 #define BUFF_SIZE 1024
 
@@ -34,3 +32,4 @@ class class_socket
 };
  
 #endif // CLASS_SOCKET_H
+

@@ -29,3 +29,4 @@ class class_parser
 };
  
 #endif // CLASS_PARSER_H
+

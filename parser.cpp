@@ -103,59 +103,6 @@ class_parser::class_parser(string url)
     }
   }
 }
-/*
-class_parser::class_parser(string url)
-{
-  unsigned url_End = url.size();
-  unsigned url_Start = 0;
-  unsigned protocol_End = url.find(":");
-  
-  protocol = "";
-  path = "";
-  file = "";
-  query = "";
-  if(protocol_End != url_End)
-  {
-    string tmp = url.substr(protocol_End,url_End);
-    if ((tmp.length() > 3) && (tmp.substr(0, 3) == "://"))
-    {
-      protocol = url.substr(url_Start, protocol_End);
-      protocol_End += 3;
-    }
-    else
-      protocol_End = url_Start;
-  }
-  else
-    protocol_End = url_Start;
-   
-  unsigned port_Start = url.find(":",protocol_End);
-  unsigned path_Start = url.find("/",protocol_End);
-  if(port_Start < url_End)
-    host = url.substr(protocol_End, port_Start - protocol_End);
-  else if(path_Start < url_End)
-    host = url.substr(protocol_End, path_Start - protocol_End);
-  else
-    host = url.substr(protocol_End, url_End);
-  
-  if(port_Start < url_End)
-    port = url.substr(port_Start+1, path_Start - port_Start);
-  else
-    port = "80";
- 
-  unsigned query_Start = url.find("?",path_Start);
-  if(query_Start > url_End)
-    query_Start = url_End;
-  unsigned file_Start = url.find("/",path_Start,query_Start-path_Start);
-  
-  file_Start = url.find_last_of("/",query_Start);
-
-  if (path_Start != url_End)
-    path = url.substr(path_Start, file_Start-path_Start+1);
-  if (file_Start != url_End)
-    file = url.substr(file_Start+1, query_Start-file_Start-1);
-  if (query_Start != url_End)
-    query = url.substr(query_Start, url_End-query_Start);
-}*/
 
 string class_parser::get_path()
 {
@@ -196,3 +143,4 @@ string class_parser::get_file_name()
       tmp.replace(pos,3," ");
     return tmp;
 }
+
